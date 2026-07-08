@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><span class="brand">🏦 VulnBank</span></nav>
+<div class="container">
+  <div class="card" style="max-width:380px;margin:3rem auto;">
+    <h2>Sign in</h2>
+    <label>Username</label>
+    <input id="username" value="alice">
+    <label>Password</label>
+    <input id="password" type="password" value="alice123">
+    <button onclick="login()">Login</button>
+    <p class="error" id="err"></p>
+    <p class="muted">Seed accounts: admin / S3cur3P@ssw0rd! · alice / alice123 · bob / bobpass · mostafa / mostafa2024</p>
+    <p class="muted">Register a new user: <a href="#" onclick="register()" style="color:var(--accent)">quick register</a></p>
+  </div>
+</div>
+<script>
+async function login() {
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    location.href = 'dashboard.html';
+  } else {
+    document.getElementById('err').textContent = data.error || 'login failed';
+  }
+}
+async function register() {
+  const username = prompt('choose a username');
+  if (!username) return;
+  const password = prompt('choose a password') || 'password123';
+  const email = prompt('email') || (username + '@vulnbank.local');
+  await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password,email})});
+  alert('registered, now login');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Profile</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <span class="brand">🏦 VulnBank</span>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="transfer.html">Transfer</a>
+  <a href="search.html">Search</a>
+  <a href="admin.html">Admin</a>
+  <a href="profile.html">Profile</a>
+  <a href="#" onclick="logout()" style="margin-left:auto">Logout</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h2>Import avatar from URL</h2>
+    <p class="muted">SSRF playground: POST /api/import-avatar fetches whatever URL you give it,
+    server-side, with no allow-list. Try an internal address like http://localhost:4000/api/admin/users
+    or point it at a Burp Collaborator URL for blind SSRF.</p>
+    <input id="avatarUrl" placeholder="https://example.com/avatar.png">
+    <button onclick="importAvatar()">Import</button>
+    <pre id="avatarResult" class="muted"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Update profile (GraphQL)</h2>
+    <p class="muted">Mass-assignment playground: the updateProfile mutation accepts a "role" field
+    with no allow-list and no check that userId belongs to you.</p>
+    <label>User ID to update</label>
+    <input id="userId" value="">
+    <label>Email</label>
+    <input id="email" value="">
+    <label>Role</label>
+    <input id="role" placeholder="user / admin">
+    <button onclick="updateProfile()">Update via GraphQL</button>
+    <pre id="profileResult" class="muted"></pre>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+requireAuth();
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+document.getElementById('userId').value = user.id;
+
+async function importAvatar() {
+  const url = document.getElementById('avatarUrl').value;
+  const res = await authFetch('/api/import-avatar', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({url})
+  });
+  document.getElementById('avatarResult').textContent = JSON.stringify(await res.json(), null, 2);
+}
+
+async function updateProfile() {
+  const userId = document.getElementById('userId').value;
+  const email = document.getElementById('email').value;
+  const role = document.getElementById('role').value;
+  const token = localStorage.getItem('token');
+  const query = `mutation($token:String!,$userId:ID!,$email:String,$role:String){
+    updateProfile(token:$token, userId:$userId, email:$email, role:$role){ id username role email }
+  }`;
+  const res = await fetch('/graphql', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({query, variables: {token, userId, email: email || null, role: role || null}})
+  });
+  document.getElementById('profileResult').textContent = JSON.stringify(await res.json(), null, 2);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Transfer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <span class="brand">🏦 VulnBank</span>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="transfer.html">Transfer</a>
+  <a href="search.html">Search</a>
+  <a href="admin.html">Admin</a>
+  <a href="profile.html">Profile</a>
+  <a href="#" onclick="logout()" style="margin-left:auto">Logout</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h2>Transfer funds</h2>
+    <p class="muted">Business-logic playground: the API never checks that "From account" belongs
+    to you, nor that the amount is positive. Try sending a negative amount, or someone else's account id.</p>
+    <label>From account id</label>
+    <input id="from" value="2">
+    <label>To account id</label>
+    <input id="to" value="3">
+    <label>Amount</label>
+    <input id="amount" type="number" value="10">
+    <label>Note</label>
+    <input id="note" placeholder="e.g. <img src=x onerror=alert(document.cookie)>">
+    <button onclick="doTransfer()">Send</button>
+    <p id="result"></p>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+requireAuth();
+async function doTransfer() {
+  const from_account = document.getElementById('from').value;
+  const to_account = document.getElementById('to').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const note = document.getElementById('note').value;
+  const res = await authFetch('/api/transfer', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({from_account, to_account, amount, note})
+  });
+  const data = await res.json();
+  document.getElementById('result').textContent = JSON.stringify(data);
+}
+</script>
+</body>
+</html>

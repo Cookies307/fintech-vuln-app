@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Search</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <span class="brand">🏦 VulnBank</span>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="transfer.html">Transfer</a>
+  <a href="search.html">Search</a>
+  <a href="admin.html">Admin</a>
+  <a href="profile.html">Profile</a>
+  <a href="#" onclick="logout()" style="margin-left:auto">Logout</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h2>Search transactions</h2>
+    <p class="muted">Reflected XSS playground: GET /api/search?q= is echoed back unescaped.</p>
+    <input id="q" placeholder="search term">
+    <button onclick="doSearch()">Search</button>
+    <div id="searchResults"></div>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+requireAuth();
+async function doSearch() {
+  const q = document.getElementById('q').value;
+  const res = await fetch('/api/search?q=' + encodeURIComponent(q));
+  const html = await res.text();
+  document.getElementById('searchResults').innerHTML = html; // renders the raw, unescaped server response
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <span class="brand">🏦 VulnBank</span>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="transfer.html">Transfer</a>
+  <a href="search.html">Search</a>
+  <a href="admin.html">Admin</a>
+  <a href="profile.html">Profile</a>
+  <a href="#" onclick="logout()" style="margin-left:auto">Logout</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h2 id="welcome">Welcome</h2>
+    <div class="balance" id="balance">--</div>
+    <div class="muted">IBAN: <span id="iban">--</span></div>
+    <!-- IDOR PLAYGROUND: this page reads ?account=<id> from the URL and fetches
+         GET /api/accounts/:id with your token. Try changing the number to see
+         someone else's account/balance. -->
+    <p class="muted" id="viewingNote"></p>
+  </div>
+
+  <div class="card">
+    <h3>Recent transactions</h3>
+    <!-- STORED XSS SINK: transaction "note" is inserted with innerHTML, unescaped -->
+    <table id="txTable"><thead><tr><th>From</th><th>To</th><th>Amount</th><th>Note</th><th>Date</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h3>Support messages</h3>
+    <!-- STORED XSS SINK: message body rendered via innerHTML -->
+    <textarea id="msgBody" placeholder="Message support..."></textarea>
+    <button onclick="sendMessage()">Send</button>
+    <div id="messagesList"></div>
+  </div>
+
+  <div class="card">
+    <!-- DOM XSS SINK: reads location.hash and writes it with innerHTML, no
+         request to the server involved at all. Try: dashboard.html#<img src=x onerror=alert(1)> -->
+    <h3>Last visited note</h3>
+    <div id="hashNote"></div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+requireAuth();
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+document.getElementById('welcome').textContent = 'Welcome, ' + user.username;
+
+const params = new URLSearchParams(location.search);
+const accountId = params.get('account') || user.id; // naive default mapping user.id->account.id in seed data
+
+async function loadAccount() {
+  document.getElementById('viewingNote').textContent = 'Viewing account id: ' + accountId + ' (try changing ?account= in the URL)';
+  const res = await authFetch('/api/accounts/' + accountId);
+  if (res.ok) {
+    const acc = await res.json();
+    document.getElementById('balance').textContent = '$' + acc.balance.toLocaleString();
+    document.getElementById('iban').textContent = acc.iban;
+  }
+}
+
+async function loadTransactions() {
+  // uses the GraphQL endpoint for variety
+  const q = `query($id: ID!){ transaction(id:$id){ id from_account to_account amount note created_at } }`;
+  const tbody = document.querySelector('#txTable tbody');
+  for (let i = 1; i <= 3; i++) {
+    const r = await fetch('/graphql', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:q, variables:{id:i}})});
+    const j = await r.json();
+    const t = j.data && j.data.transaction;
+    if (!t) continue;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.from_account}</td><td>${t.to_account}</td><td>$${t.amount}</td><td>${t.note}</td><td>${t.created_at}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function loadMessages() {
+  const res = await fetch('/api/messages');
+  const list = await res.json();
+  const el = document.getElementById('messagesList');
+  el.innerHTML = list.map(m => `<div class="msg-box">#${m.id} (user ${m.user_id}): ${m.body}</div>`).join('');
+}
+
+async function sendMessage() {
+  const body = document.getElementById('msgBody').value;
+  await authFetch('/api/messages', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({body})});
+  document.getElementById('msgBody').value = '';
+  loadMessages();
+}
+
+function renderHashNote() {
+  const note = decodeURIComponent(location.hash.slice(1));
+  document.getElementById('hashNote').innerHTML = note || '<span class="muted">no note (add #yourtext to the URL)</span>';
+}
+window.addEventListener('hashchange', renderHashNote);
+
+loadAccount();
+loadTransactions();
+loadMessages();
+renderHashNote();
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>VulnBank — Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <span class="brand">🏦 VulnBank</span>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="transfer.html">Transfer</a>
+  <a href="search.html">Search</a>
+  <a href="admin.html">Admin</a>
+  <a href="profile.html">Profile</a>
+  <a href="#" onclick="logout()" style="margin-left:auto">Logout</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h2>Admin — all users</h2>
+    <p class="muted">This page just calls GET /api/admin/users. The server "checks" your role
+    from the JWT payload it trusts. If you can forge/crack a token with role=admin
+    (the signing secret is weak), or find the privilege-escalation mutation in GraphQL, you get in.</p>
+    <button onclick="loadUsers()">Load users</button>
+    <table id="userTable"><thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Email</th><th>Balance</th><th>SSN</th></tr></thead><tbody></tbody></table>
+    <p class="error" id="err"></p>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script>
+requireAuth();
+async function loadUsers() {
+  document.getElementById('err').textContent = '';
+  const res = await authFetch('/api/admin/users');
+  if (!res.ok) {
+    document.getElementById('err').textContent = 'forbidden (status ' + res.status + ') — you are not admin... yet.';
+    return;
+  }
+  const rows = await res.json();
+  document.querySelector('#userTable tbody').innerHTML = rows.map(u =>
+    `<tr><td>${u.id}</td><td>${u.username}</td><td>${u.role}</td><td>${u.email}</td><td>$${u.balance}</td><td>${u.ssn}</td></tr>`
+  ).join('');
+}
+</script>
+</body>
+</html>
