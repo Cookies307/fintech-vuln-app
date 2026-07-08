@@ -8,6 +8,7 @@ server/.env
 
 # Logs
 *.log
+.history/
 
 # OS
 .DS_Store
