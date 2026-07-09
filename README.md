@@ -1,3 +1,21 @@
+## Included Vulnerabilities
+
+| Category | Vulnerability | Severity |
+|----------|---------------|----------|
+| Authentication | SQL Injection (Authentication Bypass) | 🔴 Critical |
+| Authentication | Weak JWT Signing Secret | 🔴 Critical |
+| Access Control | JWT Privilege Escalation | 🔴 Critical |
+| Access Control | IDOR – Account Enumeration | 🟠 High |
+| Access Control | IDOR – Unauthorized Money Transfer | 🔴 Critical |
+| Business Logic | Negative Amount Transfer | 🔴 Critical |
+| GraphQL | GraphQL Introspection Enabled | 🟡 Medium |
+| GraphQL | GraphQL IDOR | 🟠 High |
+| GraphQL | GraphQL SQL Injection | 🔴 Critical |
+| GraphQL | GraphQL Batch IDOR | 🟠 High |
+| Cross-Site Scripting | Stored XSS | 🟠 High |
+| Cross-Site Scripting | Reflected XSS | 🟡 Medium |
+| Cross-Site Scripting | DOM-based XSS | 🟡 Medium |
+| SSRF | Server-Side Request Forgery | 🔴 Critical |
 ## Getting Started
 
 ### 1. Clone the repository
